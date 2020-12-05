@@ -1,0 +1,50 @@
+cabal-version:  2.6
+name:           aoc2020
+version:        0.2.0.0
+description:    Please see the README on GitHub at <https://github.com/drumhacker72/aoc2020#readme>
+homepage:       https://github.com/drumhacker72/aoc2020#readme
+bug-reports:    https://github.com/drumhacker72/aoc2020/issues
+author:         J. Nelson
+maintainer:     drumhacker72@gmail.com
+copyright:      Copyright (c) 2020 J. Nelson
+license:        BlueOak-1.0.0
+license-file:   LICENSE.md
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/drumhacker72/aoc2020
+
+common shared
+  build-depends:
+      base >= 4.7 && < 5
+    , containers >=0.6 && <0.7
+    , scanf >=0.2 && <0.3
+  default-language: Haskell2010
+  other-extensions:
+      QuasiQuotes
+
+executable day1
+  import: shared
+  main-is: Day1.hs
+  hs-source-dirs: src
+
+executable day2
+  import: shared
+  main-is: Day2.hs
+  hs-source-dirs: src
+
+executable day3
+  import: shared
+  main-is: Day3.hs
+  hs-source-dirs: src
+
+executable day4
+  import: shared
+  main-is: Day4.hs
+  hs-source-dirs: src
+
+executable day5
+  import: shared
+  main-is: Day5.hs
+  hs-source-dirs: src
