@@ -1,11 +1,6 @@
 import Control.Monad (guard)
 import Data.Char (isDigit)
-
-group ls =
-    let (p, rest) = break null ls
-     in p : case rest of
-         []    -> []
-         _:ls' -> group ls'
+import Data.List.Split (splitWhen)
 
 parse = concatMap (map split . words)
   where
@@ -68,6 +63,6 @@ valid p = case validM of
         return ()
 
 main = do
-    ps <- map parse . group . lines <$> getContents
+    ps <- map parse . splitWhen null . lines <$> getContents
     print $ length $ filter id $ map hasRequired ps
     print $ length $ filter id $ map valid ps
