@@ -48,3 +48,8 @@ executable day5
   import: shared
   main-is: Day5.hs
   hs-source-dirs: src
+
+executable day6
+  import: shared
+  main-is: Day6.hs
+  hs-source-dirs: src
