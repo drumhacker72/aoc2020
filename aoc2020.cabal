@@ -19,6 +19,7 @@ common shared
   build-depends:
       base >= 4.7 && < 5
     , containers >= 0.6 && < 0.7
+    , mtl >= 2.2 && < 3
     , scanf >= 0.2 && < 0.3
     , split >= 0.2 && < 0.3
   default-language: Haskell2010
@@ -53,4 +54,9 @@ executable day5
 executable day6
   import: shared
   main-is: Day6.hs
+  hs-source-dirs: src
+
+executable day7
+  import: shared
+  main-is: Day7.hs
   hs-source-dirs: src
