@@ -1,16 +1,12 @@
-import Control.Monad (unless, when)
-import Control.Monad.State (State, execState, get, modify, put)
+import Control.Monad.Trans.Reader (Reader, ask, runReader)
 import Data.Bifunctor (first)
 import Data.Char (isAlpha, isDigit)
-import Data.List (find)
-import Data.Map (Map, (!))
-import Data.Set (Set, insert, member)
+import Data.Map (Map, fromList, keys, (!))
 import Text.ParserCombinators.ReadP (ReadP, readP_to_S, (+++))
 
-import qualified Data.Map as M
-import qualified Data.Set as S
 import qualified Text.ParserCombinators.ReadP as P
 
+type Ruleset = Map String [BagCount]
 type BagRule = (String, [BagCount])
 type BagCount = (Int, String)
 
@@ -40,32 +36,28 @@ bagRule = do
 readRule :: String -> BagRule
 readRule = (\[(r, "")] -> r) . readP_to_S bagRule
 
-tryMatch :: BagRule -> State (Set String) Bool
-tryMatch (color, contents) = do
-    search <- get
-    if color `member` search
-    then return False
-    else case find (\(_, c) -> c `member` search) contents of
-        Just _  -> modify (insert color) >> return True
-        Nothing -> return False
+canContain :: String -> String -> Reader Ruleset Bool
+test `canContain` search = do
+    testContents <- map snd . (! test) <$> ask
+    or <$> mapM (\c -> (c == search ||) <$> c `canContain` search) testContents
 
-expandMatches :: [BagRule] -> State (Set String) ()
-expandMatches rules = do
-    newMatches <- mapM tryMatch rules
-    when (or newMatches) $ expandMatches rules
+countContainers :: String -> Reader Ruleset Int
+countContainers search = do
+    colors <- keys <$> ask
+    length . filter id <$> mapM (`canContain` search) colors
 
-explodeOne :: Map String [BagCount] -> BagCount -> [BagCount]
-explodeOne rules (num, color) = map (first (* num)) $ rules ! color
+explodeSome :: BagCount -> Reader Ruleset [BagCount]
+explodeSome (num, color) = do
+    rules <- ask
+    return $ map (first (* num)) $ rules ! color
 
-explode :: Map String [BagCount] -> State (Int, [BagCount]) ()
-explode rules = do
-    (count, remaining) <- get
-    let count' = count + sum (map fst remaining)
-    let remaining' = concatMap (explodeOne rules) remaining
-    put (count', remaining')
-    unless (null remaining') $ explode rules
+explodeCount :: BagCount -> Reader Ruleset Int
+explodeCount bc = do
+    contents <- explodeSome bc
+    contentsCount <- sum <$> mapM explodeCount contents
+    return $ sum (map fst contents) + contentsCount
 
 main = do
-    rules <- map readRule . lines <$> getContents
-    print $ length (execState (expandMatches rules) $ S.fromList ["shiny gold"]) - 1
-    print $ fst (execState (explode $ M.fromList rules) (0, [(1, "shiny gold")])) - 1
+    rules <- fromList . map readRule . lines <$> getContents
+    print $ runReader (countContainers "shiny gold") rules
+    print $ runReader (explodeCount (1, "shiny gold")) rules
