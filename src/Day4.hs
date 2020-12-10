@@ -1,16 +1,20 @@
+module Day4(Day4) where
+
 import Control.Monad (guard)
 import Data.Char (isDigit)
 import Data.List.Split (splitWhen)
+import Data.Maybe (isJust)
+import Day
 
-parse = concatMap (map split . words)
+type Passport = [(String, String)]
+readPassport = concatMap (map split . words)
   where
     split kv =
         let (k, _:v) = break (== ':') kv
          in (k, v)
+readPassports = map readPassport . splitWhen null . lines
 
-hasRequired p = case hasRequiredM of
-    Nothing -> False
-    Just () -> True
+hasRequired p = isJust hasRequiredM
   where
     hasRequiredM = do
         lookup "byr" p
@@ -22,9 +26,7 @@ hasRequired p = case hasRequiredM of
         lookup "pid" p
         return ()
 
-valid p = case validM of
-    Nothing -> False
-    Just () -> True
+valid p = isJust validM
   where
     validM = do
         byr <- lookup "byr" p
@@ -62,7 +64,8 @@ valid p = case validM of
 
         return ()
 
-main = do
-    ps <- map parse . splitWhen null . lines <$> getContents
-    print $ length $ filter id $ map hasRequired ps
-    print $ length $ filter id $ map valid ps
+newtype Day4 = D4 { runD4 :: [Passport] }
+instance Day Day4 where
+    readDay _ = D4 . readPassports
+    part1 = show . length . filter id . map hasRequired . runD4
+    part2 = show . length . filter id . map valid . runD4

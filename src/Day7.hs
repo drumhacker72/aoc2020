@@ -1,10 +1,12 @@
+module Day7(Day7) where
+
 import Control.Monad.Trans.Reader (Reader, ask, runReader)
 import Data.Bifunctor (first)
 import Data.Char (isAlpha, isDigit)
 import Data.Map (Map, fromList, keys, (!))
-import Text.ParserCombinators.ReadP (ReadP, readP_to_S, (+++))
-
+import Text.ParserCombinators.ReadP (ReadP, (+++))
 import qualified Text.ParserCombinators.ReadP as P
+import Day
 
 type Ruleset = Map String [BagCount]
 type BagRule = (String, [BagCount])
@@ -34,7 +36,7 @@ bagRule = do
     return (color, contents)
 
 readRule :: String -> BagRule
-readRule = (\[(r, "")] -> r) . readP_to_S bagRule
+readRule = (\[(r, "")] -> r) . P.readP_to_S bagRule
 
 canContain :: String -> String -> Reader Ruleset Bool
 test `canContain` search = do
@@ -57,7 +59,8 @@ explodeCount bc = do
     contentsCount <- sum <$> mapM explodeCount contents
     return $ sum (map fst contents) + contentsCount
 
-main = do
-    rules <- fromList . map readRule . lines <$> getContents
-    print $ runReader (countContainers "shiny gold") rules
-    print $ runReader (explodeCount (1, "shiny gold")) rules
+newtype Day7 = D7 { runD7 :: Ruleset }
+instance Day Day7 where
+    readDay _ = D7 . fromList . map readRule . lines
+    part1 = show . runReader (countContainers "shiny gold") . runD7
+    part2 = show . runReader (explodeCount (1, "shiny gold")) . runD7

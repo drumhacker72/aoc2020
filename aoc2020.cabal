@@ -19,49 +19,39 @@ common shared
   build-depends:
       base ^>= 4.13.0.0
     , containers ^>= 0.6.4.1
-    , scanf ^>= 0.2.0.0
     , split ^>= 0.2.3.4
     , transformers ^>= 0.5.6.2
   default-language: Haskell2010
-  other-extensions:
-      QuasiQuotes
 
-executable day1
+library
   import: shared
-  main-is: Day1.hs
+  exposed-modules:
+    Day
+    Day1
+    Day2
+    Day3
+    Day4
+    Day5
+    Day6
+    Day7
+    Day8
+    Day9
+    Day10
   hs-source-dirs: src
 
-executable day2
+executable day
   import: shared
-  main-is: Day2.hs
-  hs-source-dirs: src
+  main-is: Main.hs
+  hs-source-dirs: app
+  build-depends: aoc2020
+  other-extensions: TypeApplications
 
-executable day3
+test-suite test
   import: shared
-  main-is: Day3.hs
-  hs-source-dirs: src
-
-executable day4
-  import: shared
-  main-is: Day4.hs
-  hs-source-dirs: src
-
-executable day5
-  import: shared
-  main-is: Day5.hs
-  hs-source-dirs: src
-
-executable day6
-  import: shared
-  main-is: Day6.hs
-  hs-source-dirs: src
-
-executable day7
-  import: shared
-  main-is: Day7.hs
-  hs-source-dirs: src
-
-executable day8
-  import: shared
-  main-is: Day8.hs
-  hs-source-dirs: src
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs: test
+  build-depends:
+      aoc2020
+    , HUnit ^>= 1.6.1.0
+  other-extensions: TypeApplications

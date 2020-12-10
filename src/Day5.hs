@@ -1,5 +1,10 @@
+module Day5(Day5) where
+
 import Numeric (readInt)
 import qualified Data.IntSet as IS
+import Day
+
+type SeatId = Int
 
 readRow = readInt 2 (`elem` "FB") rowDigit
   where
@@ -17,8 +22,8 @@ seatId (r, c) = r * 8 + c
 findGap ids = head
     [ i | i <- [1..], IS.member (i-1) ids, IS.notMember i ids, IS.member (i+1) ids ]
 
-main = do
-    seats <- fmap lines getContents
-    let seatIds = map (seatId . readLoc) seats
-    print $ maximum seatIds
-    print $ findGap $ IS.fromList seatIds
+newtype Day5 = D5 { runD5 :: [SeatId] }
+instance Day Day5 where
+    readDay _ = D5 . map (seatId . readLoc) . lines
+    part1 = show . maximum . runD5
+    part2 = show . findGap . IS.fromList . runD5
