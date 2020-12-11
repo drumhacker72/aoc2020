@@ -28,15 +28,20 @@ visibleSeat dir g =
 occupied :: Grid Char -> Bool
 occupied = ('#' ==) . extract
 
+countTrue :: [Bool] -> Int
+countTrue = length . filter id
+
 rule1 :: Grid Char -> Char
-rule1 g = case (extract g, length $ filter id $ map (occupied . ($ g)) adjacents) of
+rule1 g = case (extract g
+               , countTrue $ map (occupied . ($ g)) adjacents
+               ) of
     ('L', 0)          -> '#'
     ('#', x) | x >= 4 -> 'L'
     (s,   _)          -> s
 
 rule2 :: Grid Char -> Char
 rule2 g = case ( extract g
-               , length $ filter id $ map (maybe False occupied . ($ g) . visibleSeat) adjacents
+               , countTrue $ map (maybe False occupied . ($ g) . visibleSeat) adjacents
                ) of
     ('L', 0)          -> '#'
     ('#', x) | x >= 5 -> 'L'
