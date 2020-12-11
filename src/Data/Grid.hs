@@ -1,46 +1,42 @@
 {-# LANGUAGE DeriveFunctor #-}
 
 module Data.Grid
-    ( Grid(..)
+    ( Grid
     , up
     , down
     , left
     , right
-    , emplace
-    , modify
-    , horizontal
-    , vertical
-    , toList
-    , fromList
+    , toVector
+    , fromVector
     ) where
 
 import Control.Comonad (Comonad(..))
-import Data.Zipper (Zipper)
-import qualified Data.Zipper as Z
+import Data.Vector (Vector, generate, (!))
 
-newtype Grid a = Grid { runGrid :: Zipper (Zipper a) }
-    deriving Functor
+data Grid a = Grid
+    { row :: Int
+    , col :: Int
+    , empty :: a
+    , values :: Vector (Vector a)
+    } deriving Functor
 
 instance Comonad Grid where
-    extract = extract . extract . runGrid
-    duplicate = Grid . fmap horizontal . vertical
+    extract (Grid r c e vs)
+        | 0 <= r, r < length vs, 0 <= c, c < length (vs ! r) = vs ! r ! c
+        | otherwise = e
 
-up = Grid . Z.left . runGrid
+    duplicate g@(Grid r c _ vs) = Grid r c undefined $
+        generate (length vs) $ \r' ->
+            generate (length $ vs ! r') $ \c' -> g{row = r', col = c'}
 
-down = Grid . Z.right . runGrid
+up g@Grid{row = r} = g{row = r-1}
 
-left = Grid . fmap Z.left . runGrid
+down g@Grid{row = r} = g{row = r+1}
 
-right = Grid . fmap Z.right . runGrid
+left g@Grid{col = c} = g{col = c-1}
 
-emplace x = Grid . Z.modify (Z.emplace x)
+right g@Grid{col = c} = g{col = c+1}
 
-modify f = Grid . Z.modify (Z.modify f)
+toVector Grid{values = vs} = vs
 
-horizontal = Z.move left right
-
-vertical = Z.move up down
-
-toList up down left right = map (Z.toList left right) . Z.toList up down . runGrid
-
-fromList x = Grid . Z.fromList (Z.fromList x []) . map (Z.fromList x)
+fromVector = Grid 0 0
