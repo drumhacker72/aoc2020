@@ -37,6 +37,11 @@ library
     Day8
     Day9
     Day10
+    Day11
+  other-modules:
+    Control.Comonad
+    Data.Grid
+    Data.Zipper
   hs-source-dirs: src
 
 executable day
