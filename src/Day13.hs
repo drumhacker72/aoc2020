@@ -11,14 +11,18 @@ readBus a = Just $ read a
 timeUntil t bus = (-t) `mod` bus
 
 -- | Find Bézout coefficients (a, b) such that
--- a * m1 + b * m2 = gcd m1 m2 (= 1, if a and b are coprime)
--- (Specifically, find the pair with the smallest nonnegative a.)
--- TODO: Use the extend Euclidean algorithm instead of bruteforcing.
-bezout m1 m2 = bezout' 0
+-- a * m1 + b * m2 = gcd m1 m2
+-- using the extended Euclidean algorithm.
+bezout m1 m2 = run extEuclid
   where
-    bezout' a =
-        let (b, r) = (1 - a * m1) `divMod` m2
-         in if r == 0 then (a, b) else bezout' (a+1)
+    extEuclid = (m1, 1, 0) : (m2, 0, 1) : zipWith next extEuclid (drop 1 extEuclid)
+    next (r0, s0, t0) (r1, s1, t1) = (r2, s2, t2)
+      where
+        (q, r2) = r0 `quotRem` r1
+        s2 = s0 - q * s1
+        t2 = t0 - q * t1
+    run ((_, a, b):(0, _, _):_) = (a, b)
+    run (_:rest) = run rest
 
 -- | Apply the Chinese remainder theorem to reduce
 -- two modular congruences:
