@@ -11,13 +11,13 @@ readBus a = Just $ read a
 timeUntil t bus = (-t) `mod` bus
 
 -- | Find Bézout coefficients (a, b) such that
--- a * m1 + b * m2 = gcd m1 m2
+-- a * m1 + b * m2 = gcd m1 m2 (= 1, if a and b are coprime)
 -- (Specifically, find the pair with the smallest nonnegative a.)
 -- TODO: Use the extend Euclidean algorithm instead of bruteforcing.
 bezout m1 m2 = bezout' 0
   where
     bezout' a =
-        let (b, r) = (gcd m1 m2 - a * m1) `divMod` m2
+        let (b, r) = (1 - a * m1) `divMod` m2
          in if r == 0 then (a, b) else bezout' (a+1)
 
 -- | Apply the Chinese remainder theorem to reduce
@@ -26,9 +26,11 @@ bezout m1 m2 = bezout' 0
 -- t ≡ c2 (mod m2)
 -- to a singular congruence:
 -- t ≡ cr (mod mr)
-chineseRem (m1, c1) (m2, c2) =
-    let (a, b) = bezout m1 m2
-     in (m1*m2, (c1*m2*b + c2*m1*a) `mod` (m1*m2))
+chineseRem (m1, c1) (m2, c2)
+    | gcd m1 m2 /= 1 = error "moduli are assumed to be coprime"
+    | otherwise =
+        let (a, b) = bezout m1 m2
+         in (m1*m2, (c1*m2*b + c2*m1*a) `mod` (m1*m2))
 
 -- | Given (bus, index) to represent t+index ≡ 0 (mod bus),
 -- invert to (bus, c) to represent t ≡ c (mod bus) for use in chineseRem.
