@@ -1,6 +1,6 @@
-cabal-version:  3.0
+cabal-version:  3.4
 name:           aoc2020
-version:        0.12.0.0
+version:        0.13.0.0
 description:    Advent of Code 2020 solutions
 homepage:       https://github.com/drumhacker72/aoc2020#readme
 bug-reports:    https://github.com/drumhacker72/aoc2020/issues
@@ -17,7 +17,7 @@ source-repository head
 
 common shared
   build-depends:
-      base ^>= 4.13.0.0
+      base ^>= 4.14.0.0
     , comonad ^>= 5.0.6
     , containers ^>= 0.6.4.1
     , split ^>= 0.2.3.4
