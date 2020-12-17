@@ -1,6 +1,6 @@
 cabal-version:  3.4
 name:           aoc2020
-version:        0.16.0.1
+version:        0.17.0.0
 description:    Advent of Code 2020 solutions
 homepage:       https://github.com/drumhacker72/aoc2020#readme
 bug-reports:    https://github.com/drumhacker72/aoc2020/issues
@@ -25,6 +25,9 @@ common shared
     , vector ^>= 0.12.1.2
   default-language: Haskell2010
   ghc-options: -O2
+  other-extensions:
+    FlexibleContexts
+    TypeApplications
 
 library
   import: shared
@@ -46,17 +49,18 @@ library
     Day14
     Day15
     Day16
+    Day17
   other-modules:
+    Control.Vector
+    Data.BoolGrid
     Data.Grid
   hs-source-dirs: src
-  other-extensions: FlexibleContexts
 
 executable day
   import: shared
   main-is: Main.hs
   hs-source-dirs: app
   build-depends: aoc2020
-  other-extensions: TypeApplications
 
 test-suite test
   import: shared
@@ -66,4 +70,3 @@ test-suite test
   build-depends:
       aoc2020
     , HUnit ^>= 1.6.1.0
-  other-extensions: TypeApplications
