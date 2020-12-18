@@ -1,5 +1,6 @@
 module Control.Vector
     ( Vector(..)
+    , neighbors
     ) where
 
 class Ord v => Vector v where
@@ -22,3 +23,9 @@ instance (Integral x, Integral y, Integral z, Integral w) => Vector (x, y, z, w)
     invert (x, y, z, w) = (-x, -y, -z, -w)
     basis = [(1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1)]
     from2d (x, y) = (fromIntegral x, fromIntegral y, 0, 0)
+
+neighbors :: Vector v => v -> [v]
+neighbors p = map (p `add`) $ tail $ deltas basis
+  where
+    deltas [] = [zero]
+    deltas (v:vs) = [ d `add` d' | d <- [zero, v, invert v], d' <- deltas vs ]

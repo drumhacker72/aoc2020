@@ -4,7 +4,6 @@ module Data.BoolGrid
     , get
     , set
     , elems
-    , neighbors
     , count
     , fromList
     , from2dSlice
@@ -28,12 +27,6 @@ set p True  (BoolGrid s) = BoolGrid $ S.insert p s
 
 elems :: BoolGrid v -> Set v
 elems (BoolGrid s) = s
-
-neighbors :: Vector v => v -> [v]
-neighbors p = map (p `add`) $ tail $ deltas basis
-  where
-    deltas [] = [zero]
-    deltas (v:vs) = [ d `add` d' | d <- [zero, v, invert v], d' <- deltas vs ]
 
 count :: BoolGrid v -> Int
 count (BoolGrid s) = S.size s

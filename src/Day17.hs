@@ -2,7 +2,7 @@
 
 module Day17(Day17) where
 
-import Control.Vector (Vector)
+import Control.Vector (Vector, neighbors)
 import Data.BoolGrid (BoolGrid)
 import Data.Set (Set)
 import qualified Data.BoolGrid as BG
@@ -16,13 +16,13 @@ readSlice = map (map readCell)
 
 candidates grid =
     let ps = BG.elems grid
-        ns = map (S.fromList . BG.neighbors) $ S.toList ps
+        ns = map (S.fromList . neighbors) $ S.toList ps
      in S.toList $ S.unions (ps:ns)
 
 evolve grid = BG.fromList $ map (\p -> (p, evolve' p (BG.get p grid))) $ candidates grid
   where
     evolve' p v =
-        let n = length $ filter id $ map (`BG.get` grid) $ BG.neighbors p
+        let n = length $ filter id $ map (`BG.get` grid) $ neighbors p
          in case (v, n) of
              (True,  2) -> True
              (True,  3) -> True
