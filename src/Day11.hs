@@ -1,9 +1,9 @@
 module Day11(Day11) where
 
 import Control.Comonad (Comonad(extend, extract))
-import Data.Grid (Grid)
+import Data.FinGrid (Grid)
 import Data.Vector (Vector)
-import qualified Data.Grid as G
+import qualified Data.FinGrid as G
 import qualified Data.Vector as V
 import Day
 
