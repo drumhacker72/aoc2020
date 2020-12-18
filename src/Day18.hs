@@ -10,68 +10,26 @@ data Expr
     | Add Expr Expr
     | Mult Expr Expr
 
-data Token = Number Int | LParen | RParen | Plus | Star
+number = Literal . read <$> P.munch1 isDigit
+parenthetical expr = P.char '(' >> P.skipSpaces >> expr <* P.char ')'
+term expr = (number +++ parenthetical expr) <* P.skipSpaces
+add = P.char '+' >> P.skipSpaces >> return Add
+mult = P.char '*' >> P.skipSpaces >> return Mult
 
-number = Number . read <$> P.munch1 isDigit
-lparen = P.char '(' >> return LParen
-rparen = P.char ')' >> return RParen
-plus = P.char '+' >> return Plus
-star = P.char '*' >> return Star
-token = number +++ lparen +++ rparen +++ plus +++ star
-tokens = do
-    ts <- P.many1 (P.skipSpaces >> token)
-    P.eof
-    return ts
-readTokens :: String -> [Token]
-readTokens = (\[(tokens, "")] -> tokens) . P.readP_to_S tokens
+exprNoPrec = P.chainl1 (term exprNoPrec) (add +++ mult)
 
-parse1 :: Maybe Expr -> [Token] -> (Expr, [Token])
-parse1 (Just expr) [] = (expr, [])
-parse1 Nothing (LParen:ts) = untilRParen Nothing ts
-  where
-    untilRParen (Just expr) (RParen:ts') = (expr, ts')
-    untilRParen expr ts' =
-        let (expr', ts'') = parse1 expr ts'
-         in untilRParen (Just expr') ts''
-parse1 Nothing (Number n:ts) = (Literal n, ts)
-parse1 (Just expr) (Plus:ts) =
-    let (expr2, ts') = parse1 Nothing ts
-     in (Add expr expr2, ts')
-parse1 (Just expr) (Star:ts) =
-    let (expr2, ts') = parse1 Nothing ts
-     in (Mult expr expr2, ts')
+addExpr = P.chainl1 (term exprAddFirst) add
+exprAddFirst = P.chainl1 addExpr mult
 
-parse2 :: Maybe Expr -> [Token] -> (Expr, [Token])
-parse2 (Just expr) [] = (expr, [])
-parse2 Nothing (LParen:ts) = untilRParen Nothing ts
-  where
-    untilRParen (Just expr) (RParen:Plus:ts') = parse2 (Just expr) (Plus:ts')
-    untilRParen (Just expr) (RParen:ts') = (expr, ts')
-    untilRParen expr ts' =
-        let (expr', ts'') = parse2 expr ts'
-         in untilRParen (Just expr') ts''
-parse2 Nothing (Number n:Plus:ts) = parse2 (Just $ Literal n) (Plus:ts)
-parse2 Nothing (Number n:ts) = (Literal n, ts)
-parse2 (Just expr) (Plus:ts) =
-    let (expr2, ts') = parse2 Nothing ts
-     in (Add expr expr2, ts')
-parse2 (Just expr) (Star:ts) =
-    let (expr2, ts') = parse2 Nothing ts
-     in (Mult expr expr2, ts')
-
-parseAll parse = loop Nothing
-  where
-    loop expr ts = case parse expr ts of
-        (expr', []) -> expr'
-        (expr', ts') -> loop (Just expr') ts'
+readExpr expr s = case P.readP_to_S (expr <* P.eof) s of [(e, "")] -> e
 
 run :: Expr -> Int
 run (Literal n) = n
 run (Add a b) = run a + run b
 run (Mult a b) = run a * run b
 
-newtype Day18 = D18 { runD18 :: [[Token]] }
+newtype Day18 = D18 { runD18 :: [String] }
 instance Day Day18 where
-    readDay _ = D18 . map readTokens . lines
-    part1 = show . sum . map (run . parseAll parse1) . runD18
-    part2 = show . sum . map (run . parseAll parse2) . runD18
+    readDay _ = D18 . lines
+    part1 = show . sum . map (run . readExpr exprNoPrec) . runD18
+    part2 = show . sum . map (run . readExpr exprAddFirst) . runD18
