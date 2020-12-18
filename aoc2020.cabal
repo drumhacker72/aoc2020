@@ -1,4 +1,4 @@
-cabal-version:  3.4
+cabal-version:  3.0
 name:           aoc2020
 version:        0.18.0.1
 description:    Advent of Code 2020 solutions
@@ -17,7 +17,7 @@ source-repository head
 
 common shared
   build-depends:
-      base ^>= 4.14.0.0
+      base ^>= 4.13.0.0 || ^>= 4.14.0.0
     , comonad ^>= 5.0.7
     , containers ^>= 0.6.4.1
     , split ^>= 0.2.3.4
@@ -26,6 +26,7 @@ common shared
   default-language: Haskell2010
   ghc-options: -O2
   other-extensions:
+    DeriveFunctor
     FlexibleContexts
     TypeApplications
 
