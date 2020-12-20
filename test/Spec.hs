@@ -24,6 +24,7 @@ import Day16
 import Day17
 import Day18
 import Day19
+import Day20
 
 assertDay n t p1 p2 = do
     input <- readFile $ "input/Day" ++ show n ++ ".txt"
@@ -51,6 +52,7 @@ tests = TestList
     , TestCase $ assertDay 17 (Proxy @Day17) "448" "2400"
     , TestCase $ assertDay 18 (Proxy @Day18) "53660285675207" "141993988282687"
     , TestCase $ assertDay 19 (Proxy @Day19) "190" "311"
+    , TestCase $ assertDay 20 (Proxy @Day20) "14986175499719" "2161"
     ]
 
 main = do
