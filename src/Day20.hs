@@ -1,18 +1,22 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Day20(Day20) where
 
 import Control.Monad (guard, unless)
+import Data.Array.Repa (Array, DIM2, U, Z(Z), (:.)((:.)))
 import Data.Char (isDigit)
 import Data.List (transpose)
 import Data.List.Split (chunksOf)
 import Data.Sequence (Seq(Empty, (:<|)), (><))
 import Text.ParserCombinators.ReadP ((+++))
+import qualified Data.Array.Repa as R
 import qualified Data.Sequence as S
 import qualified Text.ParserCombinators.ReadP as P
 import Day
-import Debug.Trace
 
-data Tile = Tile { tileId :: Int, tileData :: [[Char]] }
-    deriving Show
+type Image = Array U DIM2 Char
+
+data Tile = Tile { tileId :: Int, tileImage :: Image }
 
 row = P.munch1 $ \c -> c `elem` ".#"
 tile = do
@@ -20,29 +24,35 @@ tile = do
     n <- read <$> P.munch1 isDigit
     P.string ":\n"
     rows <- P.many1 (row <* P.char '\n')
-    return $ Tile n rows
+    return $ Tile n $ R.fromListUnboxed (Z :. length rows :. length (head rows)) (concat rows)
 tiles = P.sepBy1 tile (P.char '\n')
 
 readTiles s = case P.readP_to_S (tiles <* P.eof) s of [(ts, "")] -> ts
 
-edges (Tile _ rows) =
-    [ head rows -- 0 top
-    , last cols -- 1 right
-    , reverse $ last rows -- 2 bottom
-    , reverse $ head cols -- 3 left
-    ]
+width image = case R.extent image of Z :. _ :. w -> w
+height image = case R.extent image of Z :. h :. _ -> h
+
+rev slice = R.backpermute e swap slice
   where
-    cols = transpose rows
+    e@(Z :. w) = R.extent slice
+    swap (Z :. i) = Z :. (w-1 - i)
+
+edges (Tile _ image) =
+    [ R.slice image (Z :. (0::Int) :. R.All)               -- 0 top
+    , R.slice image (Z :. R.All :. width image - 1)        -- 1 right
+    , rev $ R.slice image (Z :. height image - 1 :. R.All) -- 2 bottom
+    , rev $ R.slice image (Z :. R.All :. (0::Int))         -- 3 left
+    ]
 
 rotEdges (tile, rot) = take 4 $ drop rot $ cycle $ edges tile
 xformEdges (tile, rot, False) = rotEdges (tile, rot)
-xformEdges (tile, rot, True) = reverse $ map reverse $ rotEdges (tile, rot)
+xformEdges (tile, rot, True) = reverse $ map rev $ rotEdges (tile, rot)
 
 first f (a, b, c) = (f a, b, c)
 
-arrange :: Seq Tile -> [(Tile, Int, Bool)] -> [(Tile, Int, Bool)] -> [[(Tile, Int, Bool)]]
-arrange Empty _ _ = return []
-arrange tiles prevRow curRow = do
+arrange :: Int -> Seq Tile -> [(Tile, Int, Bool)] -> [(Tile, Int, Bool)] -> [[(Tile, Int, Bool)]]
+arrange _ Empty _ _ = return []
+arrange w tiles prevRow curRow = do
     i <- [0 .. length tiles - 1]
     let (left, tile :<| right) = S.splitAt i tiles
         restTiles = left >< right
@@ -50,18 +60,20 @@ arrange tiles prevRow curRow = do
     flip <- [False, True]
     let edges = xformEdges (tile, rot, flip)
     unless (null prevRow) $ do
-        let upEdges = xformEdges $ prevRow !! (11 - length curRow)
-        guard $ (edges !! 0) == reverse (upEdges !! 2)
+        let upEdges = xformEdges $ prevRow !! (w-1 - length curRow)
+        guard $ (edges !! 0) == rev (upEdges !! 2)
     unless (null curRow) $ do
         let leftEdges = xformEdges $ head curRow
-        guard $ (edges !! 3) == reverse (leftEdges !! 1)
+        guard $ (edges !! 3) == rev (leftEdges !! 1)
     let curRow' = (tile, rot, flip):curRow
-    rest <- if length curRow' == 12
-            then arrange restTiles curRow' []
-            else arrange restTiles prevRow curRow'
+    rest <- if length curRow' == w
+            then arrange w restTiles curRow' []
+            else arrange w restTiles prevRow curRow'
     return $ (tile, rot, flip):rest
 
-dropEdges = map (take 8 . drop 1) . take 8 . drop 1
+dropEdges image = R.extract (Z :. (1::Int) :. (1::Int)) (Z :. h-2 :. w-2) image
+  where
+    (Z :. h :. w) = R.extent image
 
 assembleRow = foldr1 (zipWith (++))
 assemble = concatMap assembleRow
@@ -81,7 +93,10 @@ xforms = do
     c <- [id, transpose]
     return $ a . b . c
 
-extract z@(tile, _, _) = xform z $ tileData tile
+extract z@(tile, _, _) = xform z $ chunksOf w $ R.toList trimmed
+  where
+    trimmed = dropEdges $ tileImage tile
+    (Z :. _ :. w) = R.extent trimmed
 
 seaMonster =
     [ "                  # "
@@ -100,17 +115,18 @@ countMatches rows
         let n = length $ filter id $ map (\i -> matchesAt $ map (drop i) rows) [0 .. length (head rows) - 20]
          in n + countMatches (drop 1 rows)
 
-newtype Day20 = D20 { runD20 :: [[(Tile, Int, Bool)]] }
+data Day20 = D20 Int [[(Tile, Int, Bool)]]
 instance Day Day20 where
     readDay _ s =
-        let tiles = S.fromList $ readTiles s
-            tiles' = head $ arrange tiles [] []
-         in D20 $ chunksOf 12 tiles'
-    part1 (D20 rows) =
+        let w = round $ sqrt $ fromIntegral $ length tiles
+            tiles = S.fromList $ readTiles s
+            tiles' = head $ arrange w tiles [] []
+         in D20 w $ chunksOf w tiles'
+    part1 (D20 w rows) =
         let x = map (map (tileId . (\(a,_,_) -> a))) rows
-         in show $ (x !! 0 !! 0) * (x !! 11 !! 0) * (x !! 0 !! 11) * (x !! 11 !! 11)
-    part2 (D20 rows) =
-        let image = assemble $ map (map (dropEdges . extract)) $ rows
+         in show $ (x !! 0 !! 0) * (x !! (w-1) !! 0) * (x !! 0 !! (w-1)) * (x !! (w-1) !! (w-1))
+    part2 (D20 _ rows) =
+        let image = assemble $ map (map extract) rows
             seaMonsters = sum $ map (countMatches . ($ image)) xforms
             hashes = sum $ map (length . filter id . map (== '#')) image
          in show $ hashes - (seaMonsters * 15)
