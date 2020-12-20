@@ -1,8 +1,8 @@
 {-# LANGUAGE TypeApplications #-}
 
+import Control.Concurrent.ParallelIO (parallel)
 import Data.Proxy (Proxy(Proxy))
-import System.Exit (exitFailure, exitSuccess)
-import Test.HUnit (Counts(errors, failures), Test(TestCase, TestList), assertEqual, runTestTT)
+import Test.HUnit (Test(TestCase, TestLabel, TestList), assertEqual, runTestTTAndExit)
 
 import Day
 import Day1
@@ -26,37 +26,41 @@ import Day18
 import Day19
 import Day20
 
-assertDay n t p1 p2 = do
+day t exp1 exp2 n = do
     input <- readFile $ "input/Day" ++ show n ++ ".txt"
-    let d = readDay t input
-    assertEqual ("for day " ++ show n ++ ", part 1,") p1 (part1 d)
-    assertEqual ("for day " ++ show n ++ ", part 2,") p2 (part2 d)
+    let input' = readDay t input
+    [r1, r2] <- parallel [return $! part1 input', return $! part2 input']
+    return ((exp1, exp2), (r1, r2))
 
-tests = TestList
-    [ TestCase $ assertDay 1 (Proxy @Day1) "357504" "12747392"
-    , TestCase $ assertDay 2 (Proxy @Day2) "582" "729"
-    , TestCase $ assertDay 3 (Proxy @Day3) "207" "2655892800"
-    , TestCase $ assertDay 4 (Proxy @Day4) "245" "133"
-    , TestCase $ assertDay 5 (Proxy @Day5) "818" "559"
-    , TestCase $ assertDay 6 (Proxy @Day6) "6735" "3221"
-    , TestCase $ assertDay 7 (Proxy @Day7) "164" "7872"
-    , TestCase $ assertDay 8 (Proxy @Day8) "1521" "1016"
-    , TestCase $ assertDay 9 (Proxy @Day9) "258585477" "36981213"
-    , TestCase $ assertDay 10 (Proxy @Day10) "2475" "442136281481216"
-    , TestCase $ assertDay 11 (Proxy @Day11) "2338" "2134"
-    , TestCase $ assertDay 12 (Proxy @Day12) "1631" "58606"
-    , TestCase $ assertDay 13 (Proxy @Day13) "171" "539746751134958"
-    , TestCase $ assertDay 14 (Proxy @Day14) "14553106347726" "2737766154126"
-    , TestCase $ assertDay 15 (Proxy @Day15) "1259" "689"
-    , TestCase $ assertDay 16 (Proxy @Day16) "26941" "634796407951"
-    , TestCase $ assertDay 17 (Proxy @Day17) "448" "2400"
-    , TestCase $ assertDay 18 (Proxy @Day18) "53660285675207" "141993988282687"
-    , TestCase $ assertDay 19 (Proxy @Day19) "190" "311"
-    , TestCase $ assertDay 20 (Proxy @Day20) "14986175499719" "2161"
+days =
+    [ day (Proxy @Day1) "357504" "12747392"
+    , day (Proxy @Day2) "582" "729"
+    , day (Proxy @Day3) "207" "2655892800"
+    , day (Proxy @Day4) "245" "133"
+    , day (Proxy @Day5) "818" "559"
+    , day (Proxy @Day6) "6735" "3221"
+    , day (Proxy @Day7) "164" "7872"
+    , day (Proxy @Day8) "1521" "1016"
+    , day (Proxy @Day9) "258585477" "36981213"
+    , day (Proxy @Day10) "2475" "442136281481216"
+    , day (Proxy @Day11) "2338" "2134"
+    , day (Proxy @Day12) "1631" "58606"
+    , day (Proxy @Day13) "171" "539746751134958"
+    , day (Proxy @Day14) "14553106347726" "2737766154126"
+    , day (Proxy @Day15) "1259" "689"
+    , day (Proxy @Day16) "26941" "634796407951"
+    , day (Proxy @Day17) "448" "2400"
+    , day (Proxy @Day18) "53660285675207" "141993988282687"
+    , day (Proxy @Day19) "190" "311"
+    , day (Proxy @Day20) "14986175499719" "2161"
+    ]
+
+testDay ((exp1, exp2), (r1, r2)) n = TestLabel ("day " ++ show n) $ TestList
+    [ TestCase $ assertEqual "for part 1," exp1 r1
+    , TestCase $ assertEqual "for part 2," exp2 r2
     ]
 
 main = do
-    results <- runTestTT tests
-    if errors results + failures results == 0
-    then exitSuccess
-    else exitFailure
+    xs <- parallel $ zipWith ($!) days [1..]
+    let tests = TestList $ zipWith testDay xs [1..]
+    runTestTTAndExit tests
