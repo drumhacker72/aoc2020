@@ -1,6 +1,6 @@
 cabal-version:  3.0
 name:           aoc2020
-version:        0.20.0.2
+version:        0.20.0.3
 description:    Advent of Code 2020 solutions
 homepage:       https://github.com/drumhacker72/aoc2020#readme
 bug-reports:    https://github.com/drumhacker72/aoc2020/issues
@@ -56,7 +56,6 @@ library
       comonad ^>= 5.0.7
     , containers ^>= 0.6.4.1
     , repa ^>= 3.4.1.4
-    , split ^>= 0.2.3.4
     , transformers ^>= 0.5.6.2
     , vector ^>= 0.12.1.2
 

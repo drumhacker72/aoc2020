@@ -22,9 +22,10 @@ write = do
     value <- read <$> P.munch1 isDigit
     return $ Write addr value
 
-program = mask +++ write
+inst = mask +++ write
 
-readProgram = map ((\[(is, "")] -> is) . P.readP_to_S program) . lines
+readInst s = case P.readP_to_S inst s of [(is, "")] -> is
+readProgram = map readInst . lines
 
 readMask1 = foldl (.) id . zipWith doBit [0..] . reverse
   where

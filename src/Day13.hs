@@ -1,12 +1,15 @@
 module Day13(Day13) where
 
+import Data.Char (isDigit)
 import Data.List (minimumBy)
-import Data.List.Split (splitWhen)
 import Data.Maybe (catMaybes, mapMaybe)
+import Text.ParserCombinators.ReadP ((+++))
+import qualified Text.ParserCombinators.ReadP as P
 import Day
 
-readBus "x" = Nothing
-readBus a = Just $ read a
+bus = (P.char 'x' >> return Nothing) +++ (Just . read <$> P.munch1 isDigit)
+busList = P.sepBy1 bus (P.char ',')
+readBusList s = case P.readP_to_S (busList <* P.eof) s of [(bs, "")] -> bs
 
 timeUntil t bus = (-t) `mod` bus
 
@@ -45,7 +48,7 @@ instance Day Day13 where
     readDay _ s =
         let [l1, l2] = lines s
             t = read l1
-            buses = map readBus $ splitWhen (== ',') l2
+            buses = readBusList l2
          in D13 (t, buses)
     part1 (D13 (t, buses)) =
         let busWaits = mapMaybe ((\b -> (b, timeUntil t b)) <$>) buses

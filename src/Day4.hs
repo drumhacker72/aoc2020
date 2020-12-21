@@ -1,18 +1,22 @@
 module Day4(Day4) where
 
 import Control.Monad (guard)
-import Data.Char (isDigit)
-import Data.List.Split (splitWhen)
+import Data.Char (isDigit, isLower)
 import Data.Maybe (isJust)
+import qualified Text.ParserCombinators.ReadP as P
 import Day
 
 type Passport = [(String, String)]
-readPassport = concatMap (map split . words)
-  where
-    split kv =
-        let (k, _:v) = break (== ':') kv
-         in (k, v)
-readPassports = map readPassport . splitWhen null . lines
+field = do
+    key <- P.munch1 isLower
+    P.char ':'
+    value <- P.munch1 (\c -> isLower c || isDigit c || c == '#')
+    return (key, value)
+passportLine = P.sepBy1 field (P.char ' ')
+passport = concat <$> P.sepBy1 passportLine (P.char '\n')
+passportList = P.sepBy1 passport (P.string "\n\n")
+readPassports s = case P.readP_to_S (passportList <* P.skipSpaces <* P.eof) s of
+    [(ps, "")] -> ps
 
 hasRequired p = isJust hasRequiredM
   where

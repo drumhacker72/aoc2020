@@ -6,7 +6,6 @@ import Control.Monad (guard, unless)
 import Data.Array.Repa (Array, DIM2, U, Z(Z), (:.)((:.)))
 import Data.Char (isDigit)
 import Data.List (transpose)
-import Data.List.Split (chunksOf)
 import Data.Sequence (Seq(Empty, (:<|)), (><))
 import Text.ParserCombinators.ReadP ((+++))
 import qualified Data.Array.Repa as R
@@ -92,6 +91,9 @@ xforms = do
     b <- [id, map reverse]
     c <- [id, transpose]
     return $ a . b . c
+
+chunksOf _ [] = []
+chunksOf n xs = take n xs : chunksOf n (drop n xs)
 
 extract z@(tile, _, _) = xform z $ chunksOf w $ R.toList trimmed
   where

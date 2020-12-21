@@ -36,7 +36,7 @@ bagRule = do
     return (color, contents)
 
 readRule :: String -> BagRule
-readRule = (\[(r, "")] -> r) . P.readP_to_S bagRule
+readRule s = case P.readP_to_S bagRule s of [(r, "")] -> r
 
 canContain :: String -> String -> Reader Ruleset Bool
 test `canContain` search = do

@@ -20,7 +20,7 @@ inst = do
     op <- (P.string "acc" >> return Acc) +++ (P.string "jmp" >> return Jmp) +++ (P.string "nop" >> return Nop)
     P.char ' '
     Inst op <$> signedNum
-readInst = (\[(r, "")] -> r) . P.readP_to_S inst
+readInst s = case P.readP_to_S inst s of [(r, "")] -> r
 
 run :: Program -> (Bool, Int)
 run insts = run' 0 0 empty

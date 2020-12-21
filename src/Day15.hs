@@ -4,10 +4,17 @@ module Day15(Day15) where
 
 import Control.Monad (foldM, forM_)
 import Control.Monad.ST (runST)
-import Data.List.Split (splitOn)
+import Data.Char (isDigit)
 import Data.Vector.Generic.Mutable (exchange, write)
+import Text.ParserCombinators.ReadP ()
 import qualified Data.Vector.Unboxed.Mutable as VUM
+import qualified Text.ParserCombinators.ReadP as P
 import Day
+
+number = read <$> P.munch1 isDigit
+numberList = P.sepBy1 number (P.char ',')
+readNumberList s = case P.readP_to_S (numberList <* P.skipSpaces <* P.eof) s of
+    [(ns, "")] -> ns
 
 next is n i = do
     prev <- exchange is n i
@@ -21,6 +28,6 @@ run end ns = do
 
 newtype Day15 = D15 [Int]
 instance Day Day15 where
-    readDay _ = D15 . map read . splitOn ","
+    readDay _ = D15 . readNumberList
     part1 (D15 ns) = show $ runST $ run 2020 ns
     part2 (D15 ns) = show $ runST $ run 30000000 ns
