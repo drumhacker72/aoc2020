@@ -25,6 +25,7 @@ import Day17
 import Day18
 import Day19
 import Day20
+import Day21
 
 run t i = do
     let d = readDay t i
@@ -55,3 +56,4 @@ main = do
         18 -> run $ Proxy @Day18
         19 -> run $ Proxy @Day19
         20 -> run $ Proxy @Day20
+        21 -> run $ Proxy @Day21

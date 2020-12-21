@@ -5,7 +5,6 @@ import Control.Monad (guard)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (Reader, ReaderT, ask, mapReaderT, runReader)
 import Data.Char (isDigit)
-import Data.Functor.Identity (Identity(Identity))
 import Data.IntMap.Strict (IntMap, (!))
 import Text.ParserCombinators.ReadP ((+++))
 import qualified Data.IntMap.Strict as IM
@@ -47,7 +46,7 @@ parse (AltRule alts:rs) xs = do
     parse (altRules ++ rs) xs
 
 matchesRule0 :: String -> Reader (IntMap Rule) Bool
-matchesRule0 s = mapReaderT (Identity . not . null) $ do
+matchesRule0 s = mapReaderT (return . not . null) $ do
     ruleMap <- ask
     remainder <- parse [ruleMap ! 0] s
     guard $ remainder == ""

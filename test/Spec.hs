@@ -29,6 +29,7 @@ import Day17
 import Day18
 import Day19
 import Day20
+import Day21
 
 day t exp1 exp2 n = do
     input <- readFile $ "input/Day" ++ show n ++ ".txt"
@@ -57,6 +58,7 @@ days =
     , day (Proxy @Day18) "53660285675207" "141993988282687"
     , day (Proxy @Day19) "190" "311"
     , day (Proxy @Day20) "14986175499719" "2161"
+    , day (Proxy @Day21) "2282" "vrzkz,zjsh,hphcb,mbdksj,vzzxl,ctmzsr,rkzqs,zmhnj"
     ]
 
 testDay ((exp1, exp2), (r1, r2)) n = TestLabel ("day " ++ show n) $ TestList

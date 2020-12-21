@@ -1,6 +1,6 @@
 cabal-version:  3.0
 name:           aoc2020
-version:        0.20.0.4
+version:        0.21.0.0
 description:    Advent of Code 2020 solutions
 homepage:       https://github.com/drumhacker72/aoc2020#readme
 bug-reports:    https://github.com/drumhacker72/aoc2020/issues
@@ -47,6 +47,7 @@ library
     Day18
     Day19
     Day20
+    Day21
   other-modules:
     Control.Vector
     Data.BoolGrid
