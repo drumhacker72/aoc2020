@@ -1,8 +1,12 @@
 {-# LANGUAGE TypeApplications #-}
 
-import Control.Concurrent.ParallelIO (parallel)
+import Control.Concurrent.ParallelIO (parallel, stopGlobalPool)
 import Data.Proxy (Proxy(Proxy))
-import Test.HUnit (Test(TestCase, TestLabel, TestList), assertEqual, runTestTTAndExit)
+import System.Exit (exitFailure, exitSuccess)
+import Test.HUnit
+    ( Counts(errors, failures), Test(TestCase, TestLabel, TestList)
+    , assertEqual, runTestTT
+    )
 
 import Day
 import Day1
@@ -63,4 +67,8 @@ testDay ((exp1, exp2), (r1, r2)) n = TestLabel ("day " ++ show n) $ TestList
 main = do
     xs <- parallel $ zipWith ($!) days [1..]
     let tests = TestList $ zipWith testDay xs [1..]
-    runTestTTAndExit tests
+    results <- runTestTT tests
+    stopGlobalPool
+    if errors results + failures results == 0
+    then exitSuccess
+    else exitFailure

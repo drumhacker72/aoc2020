@@ -3,132 +3,145 @@
 module Day20(Day20) where
 
 import Control.Monad (guard, unless)
-import Data.Array.Repa (Array, DIM2, U, Z(Z), (:.)((:.)))
+import Data.Array.Repa (Array, D, DIM2, Source, U, Z(Z), (:.)((:.)))
 import Data.Char (isDigit)
+import Data.Function ((&))
 import Data.List (transpose)
-import Data.Sequence (Seq(Empty, (:<|)), (><))
+import Data.Sequence (Seq(Empty, (:<|), (:|>)), (><))
 import Text.ParserCombinators.ReadP ((+++))
 import qualified Data.Array.Repa as R
 import qualified Data.Sequence as S
 import qualified Text.ParserCombinators.ReadP as P
 import Day
 
-type Image = Array U DIM2 Char
+type Image r = Array r DIM2 Char
 
-data Tile = Tile { tileId :: Int, tileImage :: Image }
+data Tile = Tile { tileId :: Int, tileImage :: Image U }
 
 row = P.munch1 $ \c -> c `elem` ".#"
 tile = do
     P.string "Tile "
     n <- read <$> P.munch1 isDigit
     P.string ":\n"
-    rows <- P.many1 (row <* P.char '\n')
+    rows <- P.sepBy1 row (P.char '\n')
     return $ Tile n $ R.fromListUnboxed (Z :. length rows :. length (head rows)) (concat rows)
-tiles = P.sepBy1 tile (P.char '\n')
+tiles = P.sepBy1 tile (P.string "\n\n")
 
-readTiles s = case P.readP_to_S (tiles <* P.eof) s of [(ts, "")] -> ts
+readTiles s = case P.readP_to_S (tiles <* P.skipSpaces <* P.eof) s of [(ts, "")] -> ts
 
 width image = case R.extent image of Z :. _ :. w -> w
 height image = case R.extent image of Z :. h :. _ -> h
 
-rev slice = R.backpermute e swap slice
-  where
-    e@(Z :. w) = R.extent slice
-    swap (Z :. i) = Z :. (w-1 - i)
-
-edges (Tile _ image) =
-    [ R.slice image (Z :. (0::Int) :. R.All)               -- 0 top
-    , R.slice image (Z :. R.All :. width image - 1)        -- 1 right
-    , rev $ R.slice image (Z :. height image - 1 :. R.All) -- 2 bottom
-    , rev $ R.slice image (Z :. R.All :. (0::Int))         -- 3 left
+edges image =
+    [ R.slice image (Z :. (0::Int) :. R.All)         -- 0 top
+    , R.slice image (Z :. R.All :. width image - 1)  -- 1 right
+    , R.slice image (Z :. height image - 1 :. R.All) -- 2 bottom
+    , R.slice image (Z :. R.All :. (0::Int))         -- 3 left
     ]
 
-rotEdges (tile, rot) = take 4 $ drop rot $ cycle $ edges tile
-xformEdges (tile, rot, False) = rotEdges (tile, rot)
-xformEdges (tile, rot, True) = reverse $ map rev $ rotEdges (tile, rot)
+top = (!! 0)
+right = (!! 1)
+bottom = (!! 2)
+left = (!! 3)
 
-first f (a, b, c) = (f a, b, c)
+flipX :: Source r Char => Image r -> Image D
+flipX image = R.backpermute e swap image
+  where
+    e@(Z :. w :. _) = R.extent image
+    swap (Z :. x :. y) = Z :. (w-1 - x) :. y
+flipY :: Source r Char => Image r -> Image D
+flipY image = R.backpermute e swap image
+  where
+    e@(Z :. _ :. h) = R.extent image
+    swap (Z :. x :. y) = Z :. x :. (h-1 - y)
+iden :: Source r Char => Image r -> Image D
+iden = R.map id
 
-arrange :: Int -> Seq Tile -> [(Tile, Int, Bool)] -> [(Tile, Int, Bool)] -> [[(Tile, Int, Bool)]]
-arrange _ Empty _ _ = return []
-arrange w tiles prevRow curRow = do
+xform :: Source r Char => Bool -> Bool -> Bool -> Image r -> Image D
+xform fx fy tp image = image
+    & (if fx then flipX else iden)
+    & (if fy then flipY else iden)
+    & (if tp then R.transpose else iden)
+
+arrangements :: Int -> Seq Tile -> Seq (Image D) -> Seq (Image D) -> [[Tile]]
+arrangements _ Empty _ _ = return []
+arrangements w tiles prevRow curRow = do
     i <- [0 .. length tiles - 1]
-    let (left, tile :<| right) = S.splitAt i tiles
-        restTiles = left >< right
-    rot <- [0..3]
-    flip <- [False, True]
-    let edges = xformEdges (tile, rot, flip)
+    let (leftTiles, (Tile tid origImage) :<| rightTiles) = S.splitAt i tiles
+        restTiles = leftTiles >< rightTiles
+    fx <- [False, True]
+    fy <- [False, True]
+    tp <- [False, True]
+    let image = xform fx fy tp origImage
+        es = edges image
     unless (null prevRow) $ do
-        let upEdges = xformEdges $ prevRow !! (w-1 - length curRow)
-        guard $ (edges !! 0) == rev (upEdges !! 2)
+        let u = prevRow `S.index` length curRow
+            upEdges = edges u
+        guard $ top es == bottom upEdges
     unless (null curRow) $ do
-        let leftEdges = xformEdges $ head curRow
-        guard $ (edges !! 3) == rev (leftEdges !! 1)
-    let curRow' = (tile, rot, flip):curRow
+        let _ :|> l = curRow
+            leftEdges = edges l
+        guard $ left es == right leftEdges
+    let curRow' = curRow :|> image
     rest <- if length curRow' == w
-            then arrange w restTiles curRow' []
-            else arrange w restTiles prevRow curRow'
-    return $ (tile, rot, flip):rest
+            then arrangements w restTiles curRow' Empty
+            else arrangements w restTiles prevRow curRow'
+    let image' = R.computeS image
+    return $ Tile tid image':rest
 
 dropEdges image = R.extract (Z :. (1::Int) :. (1::Int)) (Z :. h-2 :. w-2) image
   where
     (Z :. h :. w) = R.extent image
 
-assembleRow = foldr1 (zipWith (++))
-assemble = concatMap assembleRow
-
-xform (_, 0, False) = id
-xform (_, 0, True)  = transpose
-xform (_, 1, False) = reverse . transpose
-xform (_, 1, True)  = map reverse
-xform (_, 2, False) = reverse . map reverse
-xform (_, 2, True)  = reverse . map reverse . transpose
-xform (_, 3, False) = map reverse . transpose
-xform (_, 3, True)  = reverse
+assembleRow :: [Image D] -> Image D
+assembleRow = foldl1 R.append
+assemble :: [[Image D]] -> Image D
+assemble = R.transpose . assembleRow . map (R.transpose . assembleRow)
 
 xforms = do
-    a <- [id, reverse]
-    b <- [id, map reverse]
-    c <- [id, transpose]
+    a <- [iden, flipX]
+    b <- [iden, flipY]
+    c <- [iden, R.transpose]
     return $ a . b . c
 
 chunksOf _ [] = []
 chunksOf n xs = take n xs : chunksOf n (drop n xs)
 
-extract z@(tile, _, _) = xform z $ chunksOf w $ R.toList trimmed
-  where
-    trimmed = dropEdges $ tileImage tile
-    (Z :. _ :. w) = R.extent trimmed
+extract = dropEdges . tileImage
 
-seaMonster =
+seaMonster = R.fromListUnboxed (Z :. (3::Int) :. (20::Int)) $ concat
     [ "                  # "
     , "#    ##    ##    ###"
     , " #  #  #  #  #  #   "
     ]
 
-charMatch src p = src == p || p == ' '
+charMatch mask src = mask == ' ' || src == mask
 
-matchesAt rows = and $ zipWith (\a b -> and $ zipWith charMatch a b) rows seaMonster
+matchesAt = R.foldAllS (&&) True . R.zipWith charMatch seaMonster
 
-countMatches :: [[Char]] -> Int
-countMatches rows
-    | length rows < 3 = 0
+countMatches :: Int -> Int -> Image D -> Int
+countMatches x y image
+    | x+20 > w  = countMatches 0 (y+1) image
+    | y+3 > h   = 0
     | otherwise =
-        let n = length $ filter id $ map (\i -> matchesAt $ map (drop i) rows) [0 .. length (head rows) - 20]
-         in n + countMatches (drop 1 rows)
+        let slice = R.extract (Z :. y :. x) (Z :. (3::Int) :. (20::Int)) image
+            n = if matchesAt slice then 1 else 0
+         in n + countMatches (x+1) y image
+  where
+    e@(Z :. h :. w) = R.extent image
 
-data Day20 = D20 Int [[(Tile, Int, Bool)]]
+data Day20 = D20 Int [[Tile]]
 instance Day Day20 where
     readDay _ s =
         let w = round $ sqrt $ fromIntegral $ length tiles
             tiles = S.fromList $ readTiles s
-            tiles' = head $ arrange w tiles [] []
+            tiles' = head $ arrangements w tiles Empty Empty
          in D20 w $ chunksOf w tiles'
     part1 (D20 w rows) =
-        let x = map (map (tileId . (\(a,_,_) -> a))) rows
-         in show $ (x !! 0 !! 0) * (x !! (w-1) !! 0) * (x !! 0 !! (w-1)) * (x !! (w-1) !! (w-1))
+        let x = map (map tileId) rows
+         in show $ head (head x) * last (head x) * head (last x) * last (last x)
     part2 (D20 _ rows) =
-        let image = assemble $ map (map extract) rows
-            seaMonsters = sum $ map (countMatches . ($ image)) xforms
-            hashes = sum $ map (length . filter id . map (== '#')) image
+        let image = R.computeUnboxedS $ assemble $ map (map extract) rows
+            seaMonsters = sum $ map (countMatches 0 0 . ($ image)) xforms
+            hashes = R.sumAllS $ R.map (\c -> if c == '#' then 1 else 0) image
          in show $ hashes - (seaMonsters * 15)
