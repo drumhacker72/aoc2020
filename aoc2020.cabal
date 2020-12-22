@@ -1,6 +1,6 @@
 cabal-version:  3.0
 name:           aoc2020
-version:        0.21.1.0
+version:        0.22.0.0
 description:    Advent of Code 2020 solutions
 homepage:       https://github.com/drumhacker72/aoc2020#readme
 bug-reports:    https://github.com/drumhacker72/aoc2020/issues
@@ -66,6 +66,7 @@ library
     Day19
     Day20
     Day21
+    Day22
   hs-source-dirs: src
 
 executable day
@@ -80,6 +81,7 @@ test-suite test
   main-is: Spec.hs
   hs-source-dirs: test
   ghc-options:
+    -O2
     -threaded
     -rtsopts
     -with-rtsopts=-N

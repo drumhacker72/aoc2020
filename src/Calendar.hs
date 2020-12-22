@@ -24,6 +24,7 @@ import Day18 (day18)
 import Day19 (day19)
 import Day20 (day20)
 import Day21 (day21)
+import Day22 (day22)
 
 days :: [(Int, Day)]
 days = zip [1..]
@@ -48,4 +49,5 @@ days = zip [1..]
     , day19
     , day20
     , day21
+    , day22
     ]
