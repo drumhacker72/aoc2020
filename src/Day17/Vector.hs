@@ -1,4 +1,4 @@
-module Control.Vector
+module Day17.Vector
     ( Vector(..)
     , neighbors
     ) where

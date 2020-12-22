@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 
-module Data.Grid
+module Day11.Grid
     ( Grid
     , up
     , down

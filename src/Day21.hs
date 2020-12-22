@@ -1,4 +1,4 @@
-module Day21(Day21) where
+module Day21 (day21) where
 
 import Control.Monad (guard)
 import Control.Monad.Trans.Class (lift)
@@ -10,7 +10,7 @@ import Data.Sequence (Seq((:<|)), (><))
 import qualified Data.Map.Strict as M
 import qualified Data.Sequence as Seq
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statefulDay)
 
 data Food = Food { ingredients :: [Ingredient], allergens :: [Allergen] }
 newtype Ingredient = I { runI :: String }
@@ -27,6 +27,7 @@ food = do
     P.char ')'
     return $ Food ingredients allergens
 readFood s = case P.readP_to_S food s of [(f, "")] -> f
+readFoods = map readFood . lines
 
 mappings
     :: [Allergen] -> Seq Ingredient
@@ -50,12 +51,10 @@ validMappings foods =
         ingrs = Seq.fromList $ nub $ concatMap ingredients foods
      in runReaderT (mappings algns ingrs) foods
 
-data Day21 = D21 (Map Allergen Ingredient) [Ingredient]
-instance Day Day21 where
-    readDay _ s =
-        let foods = map readFood $ lines s
-            [m] = validMappings foods
+day21 = statefulDay readFoods part1 part2
+  where
+    part1 foods =
+        let [m] = validMappings foods
             ingrs = concatMap ingredients foods
-         in D21 m ingrs
-    part1 (D21 m ingrs) = show $ length $ filter (`notElem` M.elems m) ingrs
-    part2 (D21 m _) = intercalate "," $ map (runI . snd) $ M.toAscList m
+         in (m, show $ length $ filter (`notElem` M.elems m) ingrs)
+    part2 _ m = intercalate "," $ map (runI . snd) $ M.toAscList m

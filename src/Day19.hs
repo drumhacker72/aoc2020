@@ -1,4 +1,4 @@
-module Day19(Day19) where
+module Day19 (day19) where
 
 import Control.Applicative (empty)
 import Control.Monad (guard)
@@ -9,7 +9,7 @@ import Data.IntMap.Strict (IntMap, (!))
 import Text.ParserCombinators.ReadP ((+++))
 import qualified Data.IntMap.Strict as IM
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 data Rule = CharRule Char | AltRule [IdxList]
 type IdxList = [Int]
@@ -51,12 +51,11 @@ matchesRule0 s = mapReaderT (return . not . null) $ do
     remainder <- parse [ruleMap ! 0] s
     guard $ remainder == ""
 
-data Day19 = D19 (IntMap Rule) [String]
-instance Day Day19 where
-    readDay _ = uncurry D19 . readInput
-    part1 (D19 ruleMap msgs) =
+day19 = statelessDay readInput part1 part2
+  where
+    part1 (ruleMap, msgs) =
         show $ length $ filter id $ map ((`runReader` ruleMap) . matchesRule0) msgs
-    part2 (D19 ruleMap msgs) =
+    part2 (ruleMap, msgs) =
         let newRules = map readNumberedRule
                 [ "8: 42 | 42 8"
                 , "11: 42 31 | 42 11 31"

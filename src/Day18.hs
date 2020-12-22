@@ -1,9 +1,9 @@
-module Day18(Day18) where
+module Day18 (day18) where
 
 import Data.Char (isDigit)
 import Text.ParserCombinators.ReadP ((+++))
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 data Expr
     = Literal Int
@@ -28,8 +28,7 @@ run (Literal n) = n
 run (Add a b) = run a + run b
 run (Mult a b) = run a * run b
 
-newtype Day18 = D18 { runD18 :: [String] }
-instance Day Day18 where
-    readDay _ = D18 . lines
-    part1 = show . sum . map (run . readExpr exprNoPrec) . runD18
-    part2 = show . sum . map (run . readExpr exprAddFirst) . runD18
+day18 = statelessDay lines part1 part2
+  where
+    part1 = show . sum . map (run . readExpr exprNoPrec)
+    part2 = show . sum . map (run . readExpr exprAddFirst)

@@ -1,16 +1,15 @@
-module Day8(Day8) where
+module Day8 (day8) where
 
 import Data.Char (isDigit)
 import Data.IntSet (empty, insert, member)
 import Data.Sequence (Seq, fromList, index, update)
 import Text.ParserCombinators.ReadP (ReadP, (+++))
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 data Op = Acc | Jmp | Nop
 data Inst = Inst Op Int
 type Program = Seq Inst
-
 sign = (P.char '+' >> return 1) +++ (P.char '-' >> return (-1))
 signedNum = do
     s <- sign
@@ -21,6 +20,9 @@ inst = do
     P.char ' '
     Inst op <$> signedNum
 readInst s = case P.readP_to_S inst s of [(r, "")] -> r
+
+readProgram :: String -> Program
+readProgram = fromList . map readInst . lines
 
 run :: Program -> (Bool, Int)
 run insts = run' 0 0 empty
@@ -45,8 +47,7 @@ patch insts = patch' 0
              in if ok then acc else patch' (ip+1)
         _ -> patch' (ip+1)
 
-newtype Day8 = D8 { runD8 :: Program }
-instance Day Day8 where
-    readDay _ = D8 . fromList . map readInst . lines
-    part1 = show . snd . run . runD8
-    part2 = show . patch . runD8
+day8 = statelessDay readProgram part1 part2
+  where
+    part1 = show . snd . run
+    part2 = show . patch

@@ -1,4 +1,4 @@
-module Day16(Day16) where
+module Day16 (day16) where
 
 import Data.Char (isDigit)
 import Data.Foldable (toList)
@@ -6,7 +6,7 @@ import Data.List (isPrefixOf, transpose)
 import Data.Sequence (Seq((:<|), Empty), (><))
 import qualified Data.Sequence as S
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 data Rule = Rule { field :: String, predicate :: Int -> Bool }
 type Ticket = [Int]
@@ -34,6 +34,8 @@ input = do
     P.eof
     return (rules, your, nearby)
 
+readInput s = case P.readP_to_S input s of [(i, "")] -> i
+
 canBeValid rules v = any (`predicate` v) rules
 
 errorRate rules ticket =
@@ -52,13 +54,10 @@ validOrders (ticketSlice:remainingSlices) rules =
 findOrder tickets rules =
     toList $ head $ validOrders (transpose tickets) (S.fromList rules)
 
-data Day16 = D16 [Rule] Ticket [Ticket]
-instance Day Day16 where
-    readDay _ s =
-        let [((rules, your, nearby), "")] = P.readP_to_S input s
-         in D16 rules your nearby
-    part1 (D16 rules _ nearby) = show $ sum $ map (errorRate rules) nearby
-    part2 (D16 rules your nearby) =
+day16 = statelessDay readInput part1 part2
+  where
+    part1 (rules, _, nearby) = show $ sum $ map (errorRate rules) nearby
+    part2 (rules, your, nearby) =
         let validNearby = filter (all (canBeValid rules)) nearby
             fields = map field $ findOrder (your:validNearby) rules
             departureProps = filter (("departure" `isPrefixOf`) . fst) $ zip fields your

@@ -1,8 +1,8 @@
-module Day5(Day5) where
+module Day5 (day5) where
 
 import Numeric (readInt)
 import qualified Data.IntSet as IS
-import Day
+import Day (statelessDay)
 
 type SeatId = Int
 
@@ -18,12 +18,12 @@ readLoc code = head
     [ (row, col) | (row, rest) <- readRow code, (col, "") <- readCol rest ]
 
 seatId (r, c) = r * 8 + c
+readSeatIds = map (seatId . readLoc) . lines
 
 findGap ids = head
     [ i | i <- [1..], IS.member (i-1) ids, IS.notMember i ids, IS.member (i+1) ids ]
 
-newtype Day5 = D5 { runD5 :: [SeatId] }
-instance Day Day5 where
-    readDay _ = D5 . map (seatId . readLoc) . lines
-    part1 = show . maximum . runD5
-    part2 = show . findGap . IS.fromList . runD5
+day5 = statelessDay readSeatIds part1 part2
+  where
+    part1 = show . maximum
+    part2 = show . findGap . IS.fromList

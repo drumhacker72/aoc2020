@@ -1,6 +1,6 @@
 cabal-version:  3.0
 name:           aoc2020
-version:        0.21.0.0
+version:        0.21.1.0
 description:    Advent of Code 2020 solutions
 homepage:       https://github.com/drumhacker72/aoc2020#readme
 bug-reports:    https://github.com/drumhacker72/aoc2020/issues
@@ -16,17 +16,35 @@ source-repository head
   location: https://github.com/drumhacker72/aoc2020
 
 common shared
-  build-depends: base ^>= 4.13.0.0 || ^>= 4.14.1.0
+  build-depends:
+      base ^>= 4.13.0.0 || ^>= 4.14.1.0
+    , comonad ^>= 5.0.7
+    , containers ^>= 0.6.4.1
+    , repa ^>= 3.4.1.4
+    , transformers ^>= 0.5.6.2
+    , vector ^>= 0.12.1.2
   default-language: Haskell2010
   other-extensions:
     DeriveFunctor
+    ExistentialQuantification
     FlexibleContexts
+    TupleSections
     TypeApplications
+
+common extra-deps
+  build-depends:
+      aoc2020
+    , deepseq ^>= 1.4.4.0
+    , HUnit ^>= 1.6.1.0
+    , parallel-io ^>= 0.3.3
+    , time ^>= 1.11.1.1
 
 library
   import: shared
   exposed-modules:
+    Calendar
     Day
+  other-modules:
     Day1
     Day2
     Day3
@@ -37,28 +55,18 @@ library
     Day8
     Day9
     Day10
-    Day11
+    Day11 Day11.Grid
     Day12
     Day13
     Day14
     Day15
     Day16
-    Day17
+    Day17 Day17.BoolGrid Day17.Vector
     Day18
     Day19
     Day20
     Day21
-  other-modules:
-    Control.Vector
-    Data.BoolGrid
-    Data.Grid
   hs-source-dirs: src
-  build-depends:
-      comonad ^>= 5.0.7
-    , containers ^>= 0.6.4.1
-    , repa ^>= 3.4.1.4
-    , transformers ^>= 0.5.6.2
-    , vector ^>= 0.12.1.2
 
 executable day
   import: shared
@@ -67,15 +75,18 @@ executable day
   build-depends: aoc2020
 
 test-suite test
-  import: shared
+  import: shared, extra-deps
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   hs-source-dirs: test
-  build-depends:
-      aoc2020
-    , HUnit ^>= 1.6.1.0
-    , parallel-io ^>= 0.3.3
   ghc-options:
     -threaded
     -rtsopts
     -with-rtsopts=-N
+
+benchmark runtimes
+  import: shared, extra-deps
+  type: exitcode-stdio-1.0
+  main-is: Bench.hs
+  hs-source-dirs: bench
+  ghc-options: -O2

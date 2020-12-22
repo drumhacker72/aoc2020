@@ -1,8 +1,8 @@
-module Day2(Day2) where
+module Day2 (day2) where
 
 import Data.Char (isDigit)
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 data Entry = Entry Int Int Char String
 
@@ -27,8 +27,7 @@ isValid2 (Entry pos1 pos2 letter password) = at1 /= at2
     at1 = password !! (pos1-1) == letter
     at2 = password !! (pos2-1) == letter
 
-newtype Day2 = D2 { runD2 :: [Entry] }
-instance Day Day2 where
-    readDay _ = D2 . readEntries
-    part1 = show . length . filter isValid1 . runD2
-    part2 = show . length . filter isValid2 . runD2
+day2 = statelessDay readEntries part1 part2
+  where
+    part1 = show . length . filter isValid1
+    part2 = show . length . filter isValid2

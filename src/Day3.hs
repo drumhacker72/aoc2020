@@ -1,6 +1,6 @@
-module Day3(Day3) where
+module Day3 (day3) where
 
-import Day
+import Day (statelessDay)
 
 type Grid = [String]
 readGrid = map cycle . lines
@@ -18,10 +18,9 @@ countTreesInLine (dx, dy) grid = countFrom (0, 0)
                 Just '.' -> rest
                 Just '#' -> 1 + rest
 
-newtype Day3 = D3 { runD3:: Grid }
-instance Day Day3 where
-    readDay _ = D3 . readGrid
-    part1 = show . countTreesInLine (3, 1) . runD3
+day3 = statelessDay readGrid part1 part2
+  where
+    part1 = show . countTreesInLine (3, 1)
     part2 =
         let slopes = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
-         in show . product . (\grid -> map (`countTreesInLine` grid) slopes) . runD3
+         in show . product . (\grid -> map (`countTreesInLine` grid) slopes)

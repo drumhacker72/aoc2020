@@ -1,4 +1,4 @@
-module Data.BoolGrid
+module Day17.BoolGrid
     ( BoolGrid
     , mkGrid
     , get
@@ -9,9 +9,9 @@ module Data.BoolGrid
     , from2dSlice
     ) where
 
-import Control.Vector (Vector(add, basis, from2d, invert, zero))
 import Data.Set (Set)
 import qualified Data.Set as S
+import Day17.Vector (Vector(add, basis, from2d, invert, zero))
 
 newtype BoolGrid v = BoolGrid (Set v)
 

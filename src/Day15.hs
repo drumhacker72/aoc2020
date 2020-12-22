@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Day15(Day15) where
+module Day15 (day15) where
 
 import Control.Monad (foldM, forM_)
 import Control.Monad.ST (runST)
@@ -9,7 +9,7 @@ import Data.Vector.Generic.Mutable (exchange, write)
 import Text.ParserCombinators.ReadP ()
 import qualified Data.Vector.Unboxed.Mutable as VUM
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 number = read <$> P.munch1 isDigit
 numberList = P.sepBy1 number (P.char ',')
@@ -26,8 +26,7 @@ run end ns = do
     forM_ inits $ uncurry $ write is
     foldM (next is) n [i..end-1]
 
-newtype Day15 = D15 [Int]
-instance Day Day15 where
-    readDay _ = D15 . readNumberList
-    part1 (D15 ns) = show $ runST $ run 2020 ns
-    part2 (D15 ns) = show $ runST $ run 30000000 ns
+day15 = statelessDay readNumberList part1 part2
+  where
+    part1 ns = show $ runST $ run 2020 ns
+    part2 ns = show $ runST $ run 30000000 ns

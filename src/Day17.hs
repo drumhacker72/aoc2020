@@ -1,18 +1,19 @@
 {-# LANGUAGE TypeApplications #-}
 
-module Day17(Day17) where
+module Day17 (day17) where
 
-import Control.Vector (Vector, neighbors)
-import Data.BoolGrid (BoolGrid)
 import Data.Set (Set)
-import qualified Data.BoolGrid as BG
 import qualified Data.Set as S
-import Day
+import Day (statelessDay)
+import Day17.BoolGrid (BoolGrid)
+import Day17.Vector (Vector, neighbors)
+import qualified Day17.BoolGrid as BG
 
 readCell '.' = False
 readCell '#' = True
 
 readSlice = map (map readCell)
+readSlices = readSlice . lines
 
 candidates grid =
     let ps = BG.elems grid
@@ -29,8 +30,7 @@ evolve grid = BG.fromList $ map (\p -> (p, evolve' p (BG.get p grid))) $ candida
              (False, 3) -> True
              _          -> False
 
-newtype Day17 = D17 { runD17 :: [[Bool]] }
-instance Day Day17 where
-    readDay _ = D17 . readSlice . lines
-    part1 = show . BG.count . (!! 6) . iterate evolve . BG.from2dSlice @(Int, Int, Int) . runD17
-    part2 = show . BG.count . (!! 6) . iterate evolve . BG.from2dSlice @(Int, Int, Int, Int) . runD17
+day17 = statelessDay readSlices part1 part2
+  where
+    part1 = show . BG.count . (!! 6) . iterate evolve . BG.from2dSlice @(Int, Int, Int)
+    part2 = show . BG.count . (!! 6) . iterate evolve . BG.from2dSlice @(Int, Int, Int, Int)

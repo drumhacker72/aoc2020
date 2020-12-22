@@ -1,14 +1,15 @@
-module Day12(Day12) where
+module Day12 (day12) where
 
 import Control.Monad (foldM)
 import Control.Monad.Trans.State (evalState, get, modify, put)
-import Day
+import Day (statelessDay)
 
 type Nav = (Action, Int)
 data Action = N | S | E | W | L | R | F
     deriving (Read, Show)
 
 readNav (a:n) = (read [a], read n)
+readNavs = map readNav . lines
 
 move1 p (F, n) = do
     r <- get
@@ -48,8 +49,7 @@ move2 sp (a, n) = do
 
 manhattan (x, y) = abs x + abs y
 
-newtype Day12 = D12 { runD12 :: [Nav] }
-instance Day Day12 where
-    readDay _ = D12 . map readNav . lines
-    part1 = show . manhattan . (`evalState` 0) . foldM move1 (0, 0) . runD12
-    part2 = show . manhattan . (`evalState` (10, 1)) . foldM move2 (0, 0) . runD12
+day12 = statelessDay readNavs part1 part2
+  where
+    part1 = show . manhattan . (`evalState` 0) . foldM move1 (0, 0)
+    part2 = show . manhattan . (`evalState` (10, 1)) . foldM move2 (0, 0)

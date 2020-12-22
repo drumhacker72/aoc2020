@@ -1,11 +1,10 @@
-module Day11(Day11) where
+module Day11 (day11) where
 
 import Control.Comonad (Comonad(extend, extract))
-import Data.Grid (Grid)
 import Data.Vector (Vector)
-import qualified Data.Grid as G
 import qualified Data.Vector as V
-import Day
+import Day (statelessDay)
+import Day11.Grid (Grid, down, fromVector, left, right, toVector, up)
 
 type SeatLayout = Vector (Vector Char)
 readSeatLayout = V.fromList . map V.fromList . lines
@@ -13,8 +12,8 @@ readSeatLayout = V.fromList . map V.fromList . lines
 adjacents :: [Grid a -> Grid a]
 adjacents = horizontals ++ verticals ++ diagonals
   where
-    horizontals = [G.left, G.right]
-    verticals = [G.up, G.down]
+    horizontals = [left, right]
+    verticals = [up, down]
     diagonals = [ h . v | v <- verticals, h <- horizontals ]
 
 visibleSeat :: (Grid Char -> Grid Char) -> Grid Char -> Maybe (Grid Char)
@@ -49,13 +48,12 @@ rule2 g = case ( extract g
 
 run :: (Grid Char -> Char) -> SeatLayout -> Int
 run rule g =
-    let g' = G.toVector $ extend rule $ G.fromVector ' ' g
+    let g' = toVector $ extend rule $ fromVector ' ' g
      in if g == g'
         then sum $ V.map (length . V.filter id . V.map ('#' ==)) g
         else run rule g'
 
-newtype Day11 = D11 { runD11 :: SeatLayout }
-instance Day Day11 where
-    readDay _ = D11 . readSeatLayout
-    part1 = show . run rule1 . runD11
-    part2 = show . run rule2 . runD11
+day11 = statelessDay readSeatLayout part1 part2
+  where
+    part1 = show . run rule1
+    part2 = show . run rule2

@@ -1,10 +1,10 @@
-module Day4(Day4) where
+module Day4 (day4) where
 
 import Control.Monad (guard)
 import Data.Char (isDigit, isLower)
 import Data.Maybe (isJust)
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 type Passport = [(String, String)]
 field = do
@@ -68,8 +68,7 @@ valid p = isJust validM
 
         return ()
 
-newtype Day4 = D4 { runD4 :: [Passport] }
-instance Day Day4 where
-    readDay _ = D4 . readPassports
-    part1 = show . length . filter id . map hasRequired . runD4
-    part2 = show . length . filter id . map valid . runD4
+day4 = statelessDay readPassports part1 part2
+  where
+    part1 = show . length . filter id . map hasRequired
+    part2 = show . length . filter id . map valid

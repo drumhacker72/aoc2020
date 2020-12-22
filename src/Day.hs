@@ -1,10 +1,22 @@
+{-# LANGUAGE ExistentialQuantification #-}
+
 module Day
     ( Day(..)
+    , statefulDay
+    , statelessDay
     ) where
 
-import Data.Proxy (Proxy)
+data Day = forall i s. Day
+    { _readDay :: String -> i
+    , _part1 :: i -> (s, String)
+    , _part2 :: i -> s -> String
+    }
 
-class Day a where
-    readDay :: Proxy a -> String -> a
-    part1 :: a -> String
-    part2 :: a -> String
+statefulDay :: (String -> i) -> (i -> (s, String)) -> (i -> s -> String) -> Day
+statefulDay = Day
+
+statelessDay :: (String -> i) -> (i -> String) -> (i -> String) -> Day
+statelessDay readDay part1 part2 = Day
+    readDay
+    (\i -> ((), part1 i))
+    (\i _ -> part2 i)

@@ -1,4 +1,4 @@
-module Day14(Day14) where
+module Day14 (day14) where
 
 import Control.Monad.Trans.State (evalState, get, put)
 import Data.Bits (clearBit, setBit)
@@ -7,7 +7,7 @@ import Data.Foldable (foldlM)
 import Data.IntMap (elems, empty, insert, singleton, union, unions)
 import Text.ParserCombinators.ReadP ((+++))
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 data Inst = NewMask String | Write Int Int
 
@@ -52,8 +52,7 @@ run2 mem (Write addr value) = do
         writes = unions $ map (`singleton` value) addrs
     return $ writes `union` mem
 
-newtype Day14 = D14 { runD14 :: [Inst] }
-instance Day Day14 where
-    readDay _ = D14 . readProgram
-    part1 = show . sum . elems . (`evalState` undefined) . foldlM run1 empty . runD14
-    part2 = show . sum . elems . (`evalState` undefined) . foldlM run2 empty . runD14
+day14 = statelessDay readProgram part1 part2
+  where
+    part1 = show . sum . elems . (`evalState` undefined) . foldlM run1 empty
+    part2 = show . sum . elems . (`evalState` undefined) . foldlM run2 empty

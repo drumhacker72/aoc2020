@@ -1,15 +1,23 @@
-module Day13(Day13) where
+{-# LANGUAGE TupleSections #-}
+
+module Day13 (day13) where
 
 import Data.Char (isDigit)
 import Data.List (minimumBy)
 import Data.Maybe (catMaybes, mapMaybe)
 import Text.ParserCombinators.ReadP ((+++))
 import qualified Text.ParserCombinators.ReadP as P
-import Day
+import Day (statelessDay)
 
 bus = (P.char 'x' >> return Nothing) +++ (Just . read <$> P.munch1 isDigit)
 busList = P.sepBy1 bus (P.char ',')
 readBusList s = case P.readP_to_S (busList <* P.eof) s of [(bs, "")] -> bs
+
+readInput s =
+    let [l1, l2] = lines s
+        t = read l1
+        buses = readBusList l2
+     in (t, buses)
 
 timeUntil t bus = (-t) `mod` bus
 
@@ -43,18 +51,13 @@ chineseRem (m1, c1) (m2, c2)
 -- invert to (bus, c) to represent t ≡ c (mod bus) for use in chineseRem.
 invIndex (m, i) = (m, (-i) `mod` m)
 
-newtype Day13 = D13 (Integer, [Maybe Integer])
-instance Day Day13 where
-    readDay _ s =
-        let [l1, l2] = lines s
-            t = read l1
-            buses = readBusList l2
-         in D13 (t, buses)
-    part1 (D13 (t, buses)) =
+day13 = statelessDay readInput part1 part2
+  where
+    part1 (t, buses) =
         let busWaits = mapMaybe ((\b -> (b, timeUntil t b)) <$>) buses
             (bus, wait) = minimumBy (\(_, w1) (_, w2) -> compare w1 w2) busWaits
          in show $ bus * wait
-    part2 (D13 (_, buses)) =
-        let busWaits = catMaybes $ zipWith (\i -> ((\b -> (b, i)) <$>)) [0..] buses
+    part2 (_, buses) =
+        let busWaits = catMaybes $ zipWith (\i -> ((, i) <$>)) [0..] buses
             (_, t) = foldl1 chineseRem $ map invIndex busWaits
          in show t
