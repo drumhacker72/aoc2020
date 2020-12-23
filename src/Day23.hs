@@ -1,46 +1,66 @@
 module Day23 (day23) where
 
-import Data.Function ((&))
-import Data.IntMap.Strict ((!))
-import qualified Data.IntMap.Strict as IM
+import Control.Monad (zipWithM_)
+import Control.Monad.Primitive (PrimMonad, PrimState)
+import Control.Monad.ST (runST)
+import Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
+import Data.Char (digitToInt)
+import Data.Vector.Unboxed.Mutable (MVector)
+import qualified Data.Vector.Unboxed.Mutable as V
 import Day (statelessDay)
 
 type Cup = Int
 readCups :: String -> [Cup]
-readCups s = map (\x -> read [x]) line
+readCups s = map digitToInt line
   where
     [line] = lines s
 
-target maxCup i pickup
-    | i == 0          = target maxCup maxCup pickup
-    | i `elem` pickup = target maxCup (i-1) pickup
-    | otherwise       = i
+type Circle m = MVector (PrimState m) Cup
+mkCircle :: PrimMonad m => [Cup] -> m (Circle m)
+mkCircle cups = do
+    circle <- V.unsafeNew $ length cups + 1
+    zipWithM_ (V.write circle) cups (tail cups ++ [head cups])
+    return circle
 
-move maxCup current circle =
-    let pickup1 = circle ! current
-        pickup2 = circle ! pickup1
-        pickup3 = circle ! pickup2
-        dest = target maxCup (current-1) [pickup1, pickup2, pickup3]
-     in circle
-        & IM.insert current (circle ! pickup3)
-        & IM.insert dest pickup1
-        & IM.insert pickup3 (circle ! dest)
+newtype MaxCup = MaxCup Cup
 
-run 0 _ _ circle = circle
-run i maxCup current circle =
-    let circle' = move maxCup current circle
-     in run (i-1) maxCup (circle' ! current) circle'
+destination :: Monad m => [Cup] -> Cup -> ReaderT MaxCup m Cup
+destination pickup c
+    | c < 1           = ask >>= \(MaxCup c') -> destination pickup c'
+    | c `elem` pickup = destination pickup (c-1)
+    | otherwise       = return c
 
-from cup circle =
-    let cup' = (circle ! cup)
-     in cup' : from cup' circle
+move :: PrimMonad m => Cup -> Circle m -> ReaderT MaxCup m Cup
+move current circle = do
+    pickup <- takeFrom 3 current circle
+    afterPickup <- V.read circle (last pickup)
+    dest <- destination pickup (current-1)
+    afterDest <- V.read circle dest
+    V.write circle current afterPickup
+    V.write circle dest (head pickup)
+    V.write circle (last pickup) afterDest
+    V.read circle current
+
+run :: PrimMonad m => Int -> Circle m -> Cup -> ReaderT MaxCup m ()
+run 0 _      _       = return ()
+run i circle current = move current circle >>= run (i-1) circle
+
+takeFrom :: PrimMonad m => Int -> Cup -> Circle m -> m [Cup]
+takeFrom 0     _   _      = return []
+takeFrom count cup circle = do
+    next <- V.read circle cup
+    rest <- takeFrom (count-1) next circle
+    return (next:rest)
 
 day23 = statelessDay readCups part1 part2
   where
-    part1 cups =
-        let circle = IM.fromList $ zip cups (tail cups ++ [head cups])
-         in concatMap show $ take 8 $ from 1 $ run 100 9 (head cups) circle
-    part2 cups =
-        let cups' = cups ++ [10..1000000]
-            circle = IM.fromList $ zip cups' (tail cups' ++ [head cups])
-         in show $ product $ take 2 $ from 1 $ run 10000000 1000000 (head cups') circle
+    part1 cups = concatMap show $ runST $ do
+        let maxCup = length cups
+        circle <- mkCircle cups
+        runReaderT (run 100 circle (head cups)) (MaxCup maxCup)
+        takeFrom (length cups - 1) 1 circle
+    part2 cups = show $ product $ runST $ do
+        let cups' = cups ++ [length cups + 1 .. 1000000]
+        circle <- mkCircle cups'
+        runReaderT (run 10000000 circle (head cups')) (MaxCup 1000000)
+        takeFrom 2 1 circle
