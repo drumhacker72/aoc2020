@@ -46,6 +46,7 @@ dayCases =
     , test 22 "32401" "31436"
     , test 23 "38925764" "131152940564"
     , test 24 "269" "3667"
+    , test 25 "15467093" "free star"
     ]
 
 testDay (n, Nothing) = TestLabel ("day " ++ show n) $ TestCase $ assertFailure "unhandled"
