@@ -30,8 +30,10 @@ common shared
     DeriveFunctor
     ExistentialQuantification
     FlexibleContexts
+    GeneralizedNewtypeDeriving
     TupleSections
-    TypeApplications
+    TypeFamilies
+    TypeOperators
 
 common extra-deps
   build-depends:

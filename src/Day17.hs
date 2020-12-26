@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
-
 module Day17 (day17) where
 
 import Control.Comonad (Comonad(extend, extract))
@@ -52,13 +50,13 @@ day17 = statelessDay readSlices part1 part2
   where
     part1 slices =
         let w = fromIntegral $ length (head slices)
-            g = evolve (from2dSlice @Vec3 slices) !! iters
+            g = evolve (from2dSlice slices) !! iters
             lower = Vec3 (-iters) (-iters) (-iters)
             upper = Vec3 (w-1+iters) (w-1+iters) iters
          in show $ length $ filter id $ window lower upper g
     part2 slices =
         let w = fromIntegral $ length (head slices)
-            g = evolve (from2dSlice @Vec4 slices) !! iters
+            g = evolve (from2dSlice slices) !! iters
             lower = Vec4 (-iters) (-iters) (-iters) (-iters)
             upper = Vec4 (w-1+iters) (w-1+iters) iters iters
          in show $ length $ filter id $ window lower upper g
